@@ -15,23 +15,23 @@ if test -z $PACKAGE_VERSION; then
 fi
 
 # Minimum package versions
-LIBIRECOVERY_VERSION=1.0.1
+LIBIRECOVERY_VERSION=1.2.0
 LIBIMOBILEDEVICE_VERSION=1.3.0
 LIBUSBMUXD_VERSION=2.0.2
-LIBPLIST_VERSION=2.3.0
-LIMD_GLUE_VERSION=1.0.0
+LIBPLIST_VERSION=2.6.0
+LIMD_GLUE_VERSION=1.3.0
+LIBTATSU_VERSION=1.0.3
 LIBZIP_VERSION=1.0
 LIBCURL_VERSION=7.0
-OPENSSL_VERSION=0.9.8
 
 AC_SUBST(LIBIRECOVERY_VERSION)
 AC_SUBST(LIBIMOBILEDEVICE_VERSION)
 AC_SUBST(LIBUSBMUXD_VERSION)
 AC_SUBST(LIBPLIST_VERSION)
 AC_SUBST(LIMD_GLUE_VERSION)
+AC_SUBST(LIBTATSU_VERSION)
 AC_SUBST(LIBZIP_VERSION)
 AC_SUBST(LIBCURL_VERSION)
-AC_SUBST(OPENSSL_VERSION)
 
 # Checks for programs.
 AC_PROG_CC
@@ -44,34 +44,33 @@ LIBIMOBILEDEVICE_REQUIRES_STR="libimobiledevice-1.0 >= $LIBIMOBILEDEVICE_VERSION
 LIBUSBMUXD_REQUIRES_STR="libusbmuxd-2.0 >= $LIBUSBMUXD_VERSION"
 LIBPLIST_REQUIRES_STR="libplist-2.0 >= $LIBPLIST_VERSION"
 LIMD_GLUE_REQUIRES_STR="libimobiledevice-glue-1.0 >= $LIMD_GLUE_VERSION"
+LIBTATSU_REQUIRES_STR="libtatsu-1.0 >= $LIBTATSU_VERSION"
 LIBZIP_REQUIRES_STR="libzip >= $LIBZIP_VERSION"
 LIBCURL_REQUIRES_STR="libcurl >= $LIBCURL_VERSION"
 ZLIB_REQUIRES_STR="zlib"
-OPENSSL_REQUIRES_STR="openssl >= $OPENSSL_VERSION"
 
 PKG_CHECK_MODULES(libirecovery, $LIBIRECOVERY_REQUIRES_STR)
 PKG_CHECK_MODULES(libimobiledevice, $LIBIMOBILEDEVICE_REQUIRES_STR)
 PKG_CHECK_MODULES(libusbmuxd, $LIBUSBMUXD_REQUIRES_STR)
 PKG_CHECK_MODULES(libplist, $LIBPLIST_REQUIRES_STR)
 PKG_CHECK_MODULES(limd_glue, $LIMD_GLUE_REQUIRES_STR)
+PKG_CHECK_MODULES(libtatsu, $LIBTATSU_REQUIRES_STR)
 PKG_CHECK_MODULES(libzip, $LIBZIP_REQUIRES_STR)
 PKG_CHECK_MODULES(libcurl, $LIBCURL_REQUIRES_STR)
 PKG_CHECK_MODULES(zlib, $ZLIB_REQUIRES_STR)
 
 # optional
-PKG_CHECK_MODULES(openssl, $OPENSSL_REQUIRES_STR, have_openssl=yes, have_openssl=no)
-
 AC_SUBST([libirecovery_requires], [$LIBIRECOVERY_REQUIRES_STR])
 AC_SUBST([libimobiledevice_requires], [$LIBIMOBILEDEVICE_REQUIRES_STR])
 AC_SUBST([libusbmuxd_requires], [$LIBUSBMUXD_REQUIRES_STR])
 AC_SUBST([libplist_requires], [$LIBPLIST_REQUIRES_STR])
 AC_SUBST([limd_glue_requires], [$LIMD_GLUE_REQUIRES_STR])
+AC_SUBST([libtatsu_requires], [$LIBTATSU_REQUIRES_STR])
 AC_SUBST([libzip_requires], [$LIBZIP_REQUIRES_STR])
 AC_SUBST([libcurl_requires], [$LIBCURL_REQUIRES_STR])
 AC_SUBST([zlib_requires], [$ZLIB_REQUIRES_STR])
 
 AC_SUBST([release_version], [$VERSION])
-
 
 AC_CHECK_FUNCS([strsep strcspn mkstemp realpath])
 if test x$ac_cv_func_strsep != xyes; then
@@ -186,33 +185,6 @@ if test "$asan_build" = true; then
   CFLAGS+=" -g -O0 -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope"
   CXXFLAGS+=" -g -O0 -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope"
 fi
-
-AC_ARG_WITH([openssl],
-            [AS_HELP_STRING([--without-openssl],
-            [Do not use OpenSSL])],
-            [use_openssl=$withval],
-            [use_openssl=$have_openssl])
-
-if test "x$use_openssl" == "xyes"; then
-  if test "x$have_openssl" != "xyes"; then
-    echo "*** NOTE: --with-openssl passed but OpenSSL is not available ***"
-    use_openssl=no
-  fi
-fi
-if test "x$use_openssl" != "xyes"; then
-  echo "*** NOTE: Using internal SHA1 implementation ***"
-  have_openssl=no
-  openssl_CFLAGS=
-  openssl_LIBS=
-fi
-if test "x$have_openssl" == "xyes"; then
-  AC_DEFINE(HAVE_OPENSSL, [1], [Define if you have OpenSSL])
-  AC_SUBST([openssl_requires], [$OPENSSL_REQUIRES_STR])
-fi
-AC_SUBST(openssl_CFLAGS)
-AC_SUBST(openssl_LIBS)
-
-AM_CONDITIONAL(USE_INTERNAL_SHA, test x$use_openssl != xyes)
 
 AC_SUBST(GLOBAL_CFLAGS)
 AC_SUBST(AC_LDFLAGS)

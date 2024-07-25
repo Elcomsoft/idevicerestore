@@ -23,8 +23,8 @@
 #include <string.h>
 
 #include <idevicerestore/common.h>
-#include <idevicerestore/img4.h>
-#include <idevicerestore/tss.h>
+
+#include <libtatsu/tss.h>
 
 #define ASN1_PRIVATE 0xc0
 #define ASN1_PRIMITIVE_TAG 0x1f
@@ -705,13 +705,11 @@ static void _manifest_write_component(unsigned char **p, unsigned int *length, c
 
 	node = plist_dict_get_item(comp, "Digest");
 	if (node) {
-		char *digest = NULL;
 		uint64_t digest_len = 0;
-		plist_get_data_val(node, &digest, &digest_len);
+		const char *digest = plist_get_data_ptr(node, &digest_len);
 		if (digest_len > 0) {
-			_manifest_write_key_value(&tmp, &tmp_len, "DGST", ASN1_OCTET_STRING, digest, digest_len);
+			_manifest_write_key_value(&tmp, &tmp_len, "DGST", ASN1_OCTET_STRING, (void*)digest, digest_len);
 		}
-		free(digest);
 	}
 
 	node = plist_dict_get_item(comp, "Trusted");
@@ -740,9 +738,8 @@ static void _manifest_write_component(unsigned char **p, unsigned int *length, c
 
 	node = plist_dict_get_item(comp, "TBMDigests");
 	if (node) {
-		char *data = NULL;
 		uint64_t datalen = 0;
-		plist_get_data_val(node, &data, &datalen);
+		const char *data = plist_get_data_ptr(node, &datalen);
 		const char *tbmtag = NULL;
 		if (!strcmp(tag, "sepi")) {
 			tbmtag = "tbms";
@@ -752,9 +749,8 @@ static void _manifest_write_component(unsigned char **p, unsigned int *length, c
 		if (!tbmtag) {
 			error("ERROR: Unexpected TMBDigests for comp '%s'\n", tag);
 		} else {
-			_manifest_write_key_value(&tmp, &tmp_len, tbmtag, ASN1_OCTET_STRING, data, datalen);
+			_manifest_write_key_value(&tmp, &tmp_len, tbmtag, ASN1_OCTET_STRING, (void*)data, datalen);
 		}
-		free(data);
 	}
 
 	asn1_write_element_header(ASN1_SET | ASN1_CONSTRUCTED, tmp_len, &inner_start, &inner_length);
@@ -798,22 +794,22 @@ int img4_create_local_manifest(plist_t request, plist_t build_identity, plist_t*
 	unsigned int tmp_len = 0;
 
 	/* write manifest properties */
-	uintval = _plist_dict_get_uint(request, "ApBoardID");
+	uintval = plist_dict_get_uint(request, "ApBoardID");
 	_manifest_write_key_value(&tmp, &tmp_len, "BORD", ASN1_INTEGER, &uintval, -1);
 
 	uintval = 0;
 	_manifest_write_key_value(&tmp, &tmp_len, "CEPO", ASN1_INTEGER, &uintval, -1);
 
-	uintval = _plist_dict_get_uint(request, "ApChipID");
+	uintval = plist_dict_get_uint(request, "ApChipID");
 	_manifest_write_key_value(&tmp, &tmp_len, "CHIP", ASN1_INTEGER, &uintval, -1);
 
-	boolval = _plist_dict_get_bool(request, "ApProductionMode");
+	boolval = plist_dict_get_bool(request, "ApProductionMode");
 	_manifest_write_key_value(&tmp, &tmp_len, "CPRO", ASN1_BOOLEAN, &boolval, -1);
 
 	boolval = 0;
 	_manifest_write_key_value(&tmp, &tmp_len, "CSEC", ASN1_BOOLEAN, &boolval, -1);
 
-	uintval = _plist_dict_get_uint(request, "ApSecurityDomain");
+	uintval = plist_dict_get_uint(request, "ApSecurityDomain");
 	_manifest_write_key_value(&tmp, &tmp_len, "SDOM", ASN1_INTEGER, &uintval, -1);
 
 	/* create manifest properties set */
